@@ -1,4 +1,4 @@
-# twilo_programable_video
+# twilo_video_and_chat
 
 Flutter plugin for Twilio Programmable Video, which enables you to build real-time videocall applications (WebRTC)
 
