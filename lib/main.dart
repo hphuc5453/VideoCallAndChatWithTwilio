@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:twilo_programable_video/room/room_page.dart';
+import 'package:twilo_programable_video/action_page.dart';
 
 void main() {
   runApp(const TwilioProgrammableVideoExample());
@@ -15,7 +15,7 @@ class TwilioProgrammableVideoExample extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Twilio Programmable Video'),
         ),
-        body: RoomPage(),
+        body: const ActionPage(),
         ),
     );
   }

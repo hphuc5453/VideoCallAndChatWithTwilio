@@ -30,7 +30,7 @@ class RoomPage extends StatelessWidget {
                             token: state.token,
                             name: state.name,
                           ),
-                          child: ConferencePage(),
+                          child: const ConferencePage(),
                         )),
                   );
                 }
@@ -52,7 +52,7 @@ class RoomPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               TextField(
-                                key: Key('enter-name'),
+                                key: const Key('enter-name'),
                                 decoration: InputDecoration(
                                   labelText: 'Enter your name',
                                   enabled: !isLoading,
@@ -65,16 +65,16 @@ class RoomPage extends StatelessWidget {
                                 height: 16,
                               ),
                               (isLoading == true)
-                                  ? LinearProgressIndicator()
+                                  ? const LinearProgressIndicator()
                                   : ElevatedButton(
                                       onPressed: () async {
                                         await bloc.submit();
                                       },
-                                      child: Text('Enter the room')),
+                                      child: const Text('Enter the video room')),
                               (state is RoomError)
                                   ? Text(
                                       state.error,
-                                      style: TextStyle(color: Colors.red),
+                                      style: const TextStyle(color: Colors.red),
                                     )
                                   : Container(),
                               const SizedBox(

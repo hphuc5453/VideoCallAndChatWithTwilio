@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart' show IterableExtension;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:twilio_programmable_video/twilio_programmable_video.dart';
 import 'package:twilo_programable_video/conference/participant_widget.dart';
@@ -51,6 +50,7 @@ class ConferenceCubit extends Cubit<ConferenceState> {
       child: child,
     );
   }
+
   connect() async {
     print('[ APPDEBUG ] ConferenceRoom.connect()');
 
@@ -67,6 +67,7 @@ class ConferenceCubit extends Cubit<ConferenceState> {
         token,
         roomName: name,
         preferredAudioCodecs: [OpusCodec()],
+        preferredVideoCodecs: [H264Codec()],
         audioTracks: [LocalAudioTrack(true, 'audio_track-$trackId')],
         dataTracks: [
           LocalDataTrack(
@@ -81,7 +82,6 @@ class ConferenceCubit extends Cubit<ConferenceState> {
         enableDominantSpeaker: true,
       );
 
-      print('[ APPDEBUG ] $token');
       _room = await TwilioProgrammableVideo.connect(connectOptions);
       _streamSubscriptions.add(_room.onConnected.listen(_onConnected));
       _streamSubscriptions.add(_room.onDisconnected.listen(_onDisconnected));
@@ -110,10 +110,8 @@ class ConferenceCubit extends Cubit<ConferenceState> {
     print('[ APPDEBUG ] ConferenceRoom._onConnected => state: ${room.state}');
 
     // When connected for the first time, add remote participant listeners
-    _streamSubscriptions
-        .add(_room.onParticipantConnected.listen(_onParticipantConnected));
-    _streamSubscriptions.add(
-        _room.onParticipantDisconnected.listen(_onParticipantDisconnected));
+    _streamSubscriptions.add(_room.onParticipantConnected.listen(_onParticipantConnected));
+    _streamSubscriptions.add(_room.onParticipantDisconnected.listen(_onParticipantDisconnected));
     final localParticipant = room.localParticipant;
     if (localParticipant == null) {
       print('[ APPDEBUG ] ConferenceRoom._onConnected => localParticipant is null');
@@ -121,16 +119,12 @@ class ConferenceCubit extends Cubit<ConferenceState> {
     }
 
     // Only add ourselves when connected for the first time too.
-    _participants.add(_buildParticipant(
-        child: localParticipant.localVideoTracks[0].localVideoTrack.widget(),
-        id: identity));
+    _participants.add(_buildParticipant(child: localParticipant.localVideoTracks[0].localVideoTrack.widget(), id: identity));
 
     for (final remoteParticipant in room.remoteParticipants) {
-      var participant = _participants.firstWhereOrNull(
-              (participant) => participant.id == remoteParticipant.sid);
+      var participant = _participants.firstWhereOrNull((participant) => participant.id == remoteParticipant.sid);
       if (participant == null) {
-        print(
-            '[ APPDEBUG ] Adding participant that was already present in the room ${remoteParticipant.sid}, before I connected');
+        print('[ APPDEBUG ] Adding participant that was already present in the room ${remoteParticipant.sid}, before I connected');
         _addRemoteParticipantListeners(remoteParticipant);
       }
     }
@@ -142,42 +136,33 @@ class ConferenceCubit extends Cubit<ConferenceState> {
   }
 
   void _onParticipantConnected(RoomParticipantConnectedEvent event) {
-    print(
-        '[ APPDEBUG ] ConferenceRoom._onParticipantConnected, ${event.remoteParticipant.sid}');
+    print('[ APPDEBUG ] ConferenceRoom._onParticipantConnected, ${event.remoteParticipant.identity} has joined the room');
     _addRemoteParticipantListeners(event.remoteParticipant);
     reload();
   }
 
   void _onParticipantDisconnected(RoomParticipantDisconnectedEvent event) {
-    print(
-        '[ APPDEBUG ] ConferenceRoom._onParticipantDisconnected: ${event.remoteParticipant.sid}');
-    _participants.removeWhere(
-            (ParticipantWidget p) => p.id == event.remoteParticipant.sid);
+    print('[ APPDEBUG ] ConferenceRoom._onParticipantDisconnected: ${event.remoteParticipant.identity} has left the room');
+    _participants.removeWhere((ParticipantWidget p) => p.id == event.remoteParticipant.sid);
     reload();
   }
 
   void _addRemoteParticipantListeners(RemoteParticipant remoteParticipant) {
-    _streamSubscriptions.add(remoteParticipant.onVideoTrackSubscribed
-        .listen(_addOrUpdateParticipant));
-    _streamSubscriptions.add(remoteParticipant.onAudioTrackSubscribed
-        .listen(_addOrUpdateParticipant));
+    _streamSubscriptions.add(remoteParticipant.onVideoTrackSubscribed.listen(_addOrUpdateParticipant));
+    _streamSubscriptions.add(remoteParticipant.onAudioTrackSubscribed.listen(_addOrUpdateParticipant));
   }
 
   void _addOrUpdateParticipant(RemoteParticipantEvent event) {
-    print(
-        '[ APPDEBUG ] ConferenceRoom._addOrUpdateParticipant(), ${event.remoteParticipant.sid}');
+    print('[ APPDEBUG ] ConferenceRoom._addOrUpdateParticipant(), ${event.remoteParticipant.sid}');
     final participant = _participants.firstWhereOrNull(
-          (ParticipantWidget participant) =>
-      participant.id == event.remoteParticipant.sid,
+      (ParticipantWidget participant) => participant.id == event.remoteParticipant.sid,
     );
 
     if (participant != null) {
-      print(
-          '[ APPDEBUG ] Participant found: ${participant.id}, updating A/V enabled values');
+      print('[ APPDEBUG ] Participant found: ${participant.id}, updating A/V enabled values');
     } else {
       if (event is RemoteVideoTrackSubscriptionEvent) {
-        print(
-            '[ APPDEBUG ] New participant, adding: ${event.remoteParticipant.sid}');
+        print('[ APPDEBUG ] New participant, adding: ${event.remoteParticipant.sid}');
         _participants.insert(
           0,
           _buildParticipant(

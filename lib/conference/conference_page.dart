@@ -8,7 +8,7 @@ class ConferencePage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ConferencePageState createState() => _ConferencePageState();
+  State<StatefulWidget> createState() => _ConferencePageState();
 }
 
 class _ConferencePageState extends State<ConferencePage> {
@@ -66,14 +66,14 @@ class _ConferencePageState extends State<ConferencePage> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
+      children: const <Widget>[
         Center(child: CircularProgressIndicator()),
         SizedBox(
           height: 10,
         ),
         Text(
-          'Connecting to the room...',
-          style: TextStyle(color: Colors.white),
+          'Connecting to the video room...',
+          style: TextStyle(color: Colors.black),
         ),
       ],
     );
@@ -92,7 +92,7 @@ class _ConferencePageState extends State<ConferencePage> {
     final participants = conferenceRoom.participants;
     children.add(GridView.builder(
         gridDelegate:
-            SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 1),
+            const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 1),
         itemCount: participants.length,
         itemBuilder: (BuildContext context, int index) {
           return Card(
