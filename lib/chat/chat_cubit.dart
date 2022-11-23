@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+
 import '../shared/twilio_service.dart';
 
 abstract class ChatState extends Equatable {
@@ -17,15 +18,7 @@ class ChatError extends ChatState {
   List<Object> get props => [error];
 }
 
-class ChatLoaded extends ChatState {
-  final String name;
-  final String token;
-  final String identity;
-
-  const ChatLoaded({required this.name, required this.token, required this.identity});
-  @override
-  List<Object> get props => [];
-}
+class ChatLoaded extends ChatState {}
 
 class ChatLoading extends ChatState {}
 
@@ -37,5 +30,10 @@ class ChatCubit extends Cubit<ChatState> {
 
   submit() async {
     emit(ChatLoading());
+  }
+
+  reload() {
+    emit(ChatInitial());
+    emit(ChatLoaded());
   }
 }

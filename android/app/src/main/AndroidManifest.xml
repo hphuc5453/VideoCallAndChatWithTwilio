@@ -5,8 +5,11 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <!-- Required to fetch data from the internet. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
-   <application
+
+    <application
         android:label="twilo_programable_video"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

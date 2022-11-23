@@ -280,6 +280,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.12"
+  twilio_programmable_chat:
+    dependency: "direct main"
+    description:
+      name: twilio_programmable_chat
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.0"
   twilio_programmable_video:
     dependency: "direct main"
     description:

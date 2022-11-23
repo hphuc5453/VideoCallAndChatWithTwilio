@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:twilo_programable_video/progress/progress_widget.dart';
 import 'conference_cubit.dart';
 
 class ConferencePage extends StatefulWidget {
@@ -29,7 +30,7 @@ class _ConferencePageState extends State<ConferencePage> {
           listener: (context, state) {},
           builder: (context, state) {
             if (state is ConferenceInitial) {
-              return showProgress();
+              return const ProgressWidget(description: 'Connecting to the video room...');
             }
             if (state is ConferenceLoaded) {
               return Stack(
@@ -59,23 +60,6 @@ class _ConferencePageState extends State<ConferencePage> {
             }
             return Container();
           }),
-    );
-  }
-
-  Widget showProgress() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: const <Widget>[
-        Center(child: CircularProgressIndicator()),
-        SizedBox(
-          height: 10,
-        ),
-        Text(
-          'Connecting to the video room...',
-          style: TextStyle(color: Colors.black),
-        ),
-      ],
     );
   }
 

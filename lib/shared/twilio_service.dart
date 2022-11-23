@@ -1,12 +1,18 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../app_constants.dart';
 
 class TwilioFunctionsService {
   TwilioFunctionsService._();
   static final instance = TwilioFunctionsService._();
-
   final http.Client client = http.Client();
   final accessTokenUrl = 'https://twiliochatroomaccesstoken-6263.twil.io/accesstoken';
+
+  static Map<String, String> getHeaders() {
+    String creds = '${AppConstants.accountSID}:${AppConstants.authToken}';
+    var bytes = utf8.encode(creds);
+    return {'Content-Type': 'application/json', 'Authorization': 'Basic ${base64.encode(bytes)}', 'Accept': 'application/json'};
+  }
 
   Future<dynamic> createToken(String identity) async {
     try {
