@@ -4,8 +4,6 @@ import 'package:twilo_programable_video/chat/chat_cubit.dart';
 import 'package:twilo_programable_video/chat/chat_page.dart';
 import 'package:twilo_programable_video/conversation_list/conversations_data.dart';
 
-import '../shared/twilio_service.dart';
-
 class ConversationWidget extends StatelessWidget {
   final Conversations conversation;
 
@@ -17,7 +15,7 @@ class ConversationWidget extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute<ChatPage>(
             builder: (BuildContext context) => BlocProvider(
-              create: (BuildContext context) => ChatCubit(backendService: TwilioFunctionsService.instance),
+              create: (BuildContext context) => ChatCubit(conversationId: conversation.sid!),
               child: ChatPage(conversation: conversation,),
             )));
       },
