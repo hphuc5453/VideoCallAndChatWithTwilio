@@ -1,10 +1,9 @@
-import 'dart:convert';
+import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:http/http.dart';
+import 'package:twilio_conversations/twilio_conversations.dart';
 import 'package:twilo_programable_video/app_constants.dart';
 import '../shared/twilio_service.dart';
-import 'conversations_data.dart';
 
 abstract class ConversationListState extends Equatable {
   const ConversationListState();
@@ -15,7 +14,11 @@ abstract class ConversationListState extends Equatable {
 
 class ConversationListInitial extends ConversationListState {}
 
-class ConversationListLoaded extends ConversationListState {}
+class ConversationListLoaded extends ConversationListState {
+  final List<Conversation> conversations;
+
+  const ConversationListLoaded({required this.conversations});
+}
 
 class ConversationListLoading extends ConversationListState {}
 
@@ -30,22 +33,24 @@ class ConversationListError extends ConversationListState {
 
 class ConversationListCubit extends Cubit<ConversationListState> {
   final TwilioFunctionsService backendService;
-  late List<Conversations> _conversations = [];
+  late ConversationClient client;
+  final plugin = TwilioConversations();
+  final subscriptions = <StreamSubscription>[];
 
-  List<Conversations> get conversationList => _conversations;
+  ConversationListCubit({required this.backendService}) : super(ConversationListInitial());
 
-  ConversationListCubit({required this.backendService}) : super(ConversationListInitial()) {
-    submit();
+  join(Conversation conversation) async {
+    await conversation.join();
   }
 
   submit() async {
     emit(ConversationListLoading());
     String? token;
     try {
-      final twilioRoomTokenResponse = await backendService.createToken('hphuc');
+      final twilioRoomTokenResponse = await backendService.createToken(AppConstants.getIdentity);
       token = twilioRoomTokenResponse['accessToken'];
       if (token != null) {
-        getMyConversations(token);
+        await create(jwtToken: token);
       } else {
         emit(const ConversationListError(error: 'Access token is empty!'));
       }
@@ -54,18 +59,41 @@ class ConversationListCubit extends Cubit<ConversationListState> {
     } finally {}
   }
 
-  void getMyConversations(String token) async {
-    Map<String, String> requestHeaders = TwilioFunctionsService.getHeaders();
-    final response = await get(Uri.parse('${AppConstants.domainURL}/Conversations'), headers: requestHeaders);
-    if (response.statusCode == 200) {
-      final conversations = ConversationsData.fromJson(jsonDecode(response.body));
-      _conversations = (conversations.conversations ?? []);
-    }
-    reload();
+  Future<void> create({required String jwtToken}) async {
+    await TwilioConversations.debug(dart: true, native: true, sdk: false);
+
+    print('debug logging set, creating client...');
+    client = (await plugin.create(jwtToken: jwtToken))!;
+
+    print('Client initialized');
+    print('Your Identity: ${client.myIdentity}');
+
+    subscriptions.add(client.onConversationAdded.listen((event) {
+      getMyConversations();
+    }));
+
+    subscriptions.add(client.onConversationUpdated.listen((event) {
+      getMyConversations();
+    }));
+
+    subscriptions.add(client.onConversationDeleted.listen((event) {
+      getMyConversations();
+    }));
+
+    getMyConversations();
   }
 
-  reload() {
-    emit(ConversationListInitial());
-    emit(ConversationListLoaded());
+  createConversation({String friendlyName = 'Test Conversation'}) async {
+    var result = await client.createConversation(friendlyName: friendlyName);
+    print('Conversation successfully created: ${result?.friendlyName}');
+    await getMyConversations();
+  }
+
+  Future<void> getMyConversations() async {
+    await client.getMyConversations().then((v) {
+      //TODO: With iOS, the library cannot get the frienly name of conversation
+      emit(ConversationListInitial());
+      emit(ConversationListLoaded(conversations: v));
+    });
   }
 }

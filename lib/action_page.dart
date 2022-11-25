@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:twilo_programable_video/conversation_list/conversation_list_cubit.dart';
-import 'package:twilo_programable_video/conversation_list/conversation_list_page.dart';
+import 'package:twilo_programable_video/conversation_list/identity_input_widget.dart';
 import 'package:twilo_programable_video/room/room_page.dart';
-import 'package:twilo_programable_video/shared/twilio_service.dart';
 
 class ActionPage extends StatelessWidget {
   const ActionPage({Key? key}) : super(key: key);
@@ -22,11 +19,7 @@ class ActionPage extends StatelessWidget {
                 child: const Text('Enter the video room')),
             ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute<ConversationListPage>(
-                      builder: (BuildContext context) => BlocProvider(
-                            create: (BuildContext context) => ConversationListCubit(backendService: TwilioFunctionsService.instance),
-                            child: const ConversationListPage(),
-                          )));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const IdentityInputWidget()));
                 },
                 child: const Text('Enter the chat room'))
           ],

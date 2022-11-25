@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:twilo_programable_video/app_constants.dart';
 import '../shared/twilio_service.dart';
 
 abstract class RoomState extends Equatable {
@@ -32,7 +33,6 @@ class RoomLoading extends RoomState {}
 class RoomCubit extends Cubit<RoomState> {
   final TwilioFunctionsService backendService;
 
-  String? name;
   RoomCubit({required this.backendService}) : super(RoomInitial());
 
   submit() async {
@@ -40,14 +40,12 @@ class RoomCubit extends Cubit<RoomState> {
     String? token;
     String? identity;
     try {
-      if (name != null) {
-        final twilioRoomTokenResponse = await backendService.createToken(name!);
-        token = twilioRoomTokenResponse['accessToken'];
-        identity = twilioRoomTokenResponse['user'];
-      }
+      final twilioRoomTokenResponse = await backendService.createToken(AppConstants.getIdentity);
+      token = twilioRoomTokenResponse['accessToken'];
+      identity = AppConstants.getIdentity;
 
-      if (token != null && identity != null) {
-        emit(RoomLoaded(name: name ?? '', token: token, identity: identity));
+      if (token != null) {
+        emit(RoomLoaded(name: identity ?? '', token: token, identity: identity));
       } else {
         emit(const RoomError(error: 'Access token is empty!'));
       }

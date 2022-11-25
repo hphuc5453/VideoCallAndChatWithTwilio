@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:twilo_programable_video/app_constants.dart';
 import 'package:twilo_programable_video/room/room_cubit.dart';
 import 'package:twilo_programable_video/shared/twilio_service.dart';
 import '../conference/conference_cubit.dart';
@@ -28,7 +29,7 @@ class RoomPage extends StatelessWidget {
                           create: (BuildContext context) => ConferenceCubit(
                             identity: state.identity,
                             token: state.token,
-                            name: state.name,
+                            name: state.identity,
                           ),
                           child: const ConferencePage(),
                         )),
@@ -59,7 +60,7 @@ class RoomPage extends StatelessWidget {
                                 ),
                                 controller: _nameController,
                                 onChanged: (newValue) =>
-                                    context.read<RoomCubit>().name = newValue,
+                                    AppConstants.setIdentity(newValue),
                               ),
                               const SizedBox(
                                 height: 16,

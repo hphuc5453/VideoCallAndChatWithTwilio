@@ -2,18 +2,27 @@ PODS:
   - Flutter (1.0.0)
   - permission_handler_apple (9.0.4):
     - Flutter
+  - SwiftyJSON (5.0.1)
+  - twilio_conversations (0.0.1):
+    - Flutter
+    - SwiftyJSON (~> 5.0.1)
+    - TwilioConversationsClient (~> 1.3)
   - twilio_programmable_video (1.0.0):
     - Flutter
     - TwilioVideo (~> 4.6)
+  - TwilioConversationsClient (1.3.1)
   - TwilioVideo (4.6.3)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - twilio_conversations (from `.symlinks/plugins/twilio_conversations/ios`)
   - twilio_programmable_video (from `.symlinks/plugins/twilio_programmable_video/ios`)
 
 SPEC REPOS:
   trunk:
+    - SwiftyJSON
+    - TwilioConversationsClient
     - TwilioVideo
 
 EXTERNAL SOURCES:
@@ -21,13 +30,18 @@ EXTERNAL SOURCES:
     :path: Flutter
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
+  twilio_conversations:
+    :path: ".symlinks/plugins/twilio_conversations/ios"
   twilio_programmable_video:
     :path: ".symlinks/plugins/twilio_programmable_video/ios"
 
 SPEC CHECKSUMS:
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   permission_handler_apple: 44366e37eaf29454a1e7b1b7d736c2cceaeb17ce
+  SwiftyJSON: 2f33a42c6fbc52764d96f13368585094bfd8aa5e
+  twilio_conversations: 59797cabe5846a19ccc63bef2cf5674932beecd5
   twilio_programmable_video: 2f8276b05e347af7646c2539ba595b0c013c5824
+  TwilioConversationsClient: 10e017b8ef6e6286b444222fffac02914df85b9d
   TwilioVideo: 4afaac028c5886f2f3b313a9fcc146a6b7ca34e2
 
 PODFILE CHECKSUM: 7107e1de9247166205bde14a3c274a2e2387d86d

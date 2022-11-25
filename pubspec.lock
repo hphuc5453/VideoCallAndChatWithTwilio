@@ -280,6 +280,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.12"
+  twilio_conversations:
+    dependency: "direct main"
+    description:
+      name: twilio_conversations
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0+1"
   twilio_programmable_video:
     dependency: "direct main"
     description:

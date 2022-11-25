@@ -1,12 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
-
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:http/http.dart';
-
-import '../app_constants.dart';
-import '../shared/twilio_service.dart';
-import 'messages_data.dart';
+import 'package:twilio_conversations/twilio_conversations.dart';
 
 abstract class ChatState extends Equatable {
   const ChatState();
@@ -24,44 +20,76 @@ class ChatError extends ChatState {
 }
 
 class ChatLoaded extends ChatState {}
-
 class ChatLoading extends ChatState {}
+class ChatParticipantsLoading extends ChatState {}
+class ChatParticipantsLoaded extends ChatState {
+  final List<Participant> participants;
+  const ChatParticipantsLoaded({required this.participants});
+}
 
 class ChatCubit extends Cubit<ChatState> {
-  final String conversationId;
-  late List<Message> _messages = [];
+  final Conversation conversation;
+  late final List<Message> _messages = [];
   List<Message> get messageList => _messages;
+  final subscriptions = <StreamSubscription>[];
 
-  ChatCubit({required this.conversationId}) : super(ChatInitial()) {
-    submit();
+  ChatCubit({required this.conversation}) : super(ChatInitial());
+
+  getParticipants() async {
+    emit(ChatParticipantsLoading());
+    print('[ChatDebug] getParticipants');
+    await conversation.getParticipantsList().then((value) => {
+    emit(ChatParticipantsLoaded(participants: value))
+    });
+  }
+
+  addUserByIdentity(String identity) async {
+    print('[ChatDebug] addUserByIdentity');
+    await conversation.addParticipantByIdentity(identity);
+    await conversation.getParticipantsList();
+  }
+
+  removeParticipant(Participant participant) async {
+    await participant.remove();
+    await getParticipants();
   }
 
   sendMessage(String message) async {
-    String creds = '${AppConstants.accountSID}:${AppConstants.authToken}';
-    var bytes = utf8.encode(creds);
-    Map<String, String> requestHeaders = {'Authorization': 'Basic ${base64.encode(bytes)}'};
     try {
       // set arbitrary attributes
       final attributesData = <String, dynamic>{
-        'body': message,
-        'author': 'hphuc'
+        'importance': 'high'
       };
-      final response = await post(Uri.parse('${AppConstants.domainURL}/Conversations/$conversationId/Messages'), headers: requestHeaders, body: attributesData);
-      if (response.statusCode == 201) {
-        reload();
-      }
+      final attributes =
+      Attributes(AttributesType.OBJECT, jsonEncode(attributesData));
+      final messageOptions = MessageOptions()
+        ..withBody(message)
+        ..withAttributes(attributes);
+      await conversation.sendMessage(messageOptions);
+      await loadMessages();
     } catch (e) {
-      print('Failed to send message Error: $e');
+      print('[ChatCubit.sendMessage] Failed to send message Error: $e');
     }
   }
 
   submit() async {
     emit(ChatLoading());
-    Map<String, String> requestHeaders = TwilioFunctionsService.getHeaders();
-    final response = await get(Uri.parse('${AppConstants.domainURL}/Conversations/$conversationId/Messages'), headers: requestHeaders);
-    if (response.statusCode == 200) {
-      print('xxxxxxxx: ${response.body}');
+    subscriptions.add(conversation.onMessageAdded.listen((event) {
+      loadMessages();
+    }));
+    loadMessages();
+  }
+
+  loadMessages() async {
+    final numberOfMessages = await conversation.getMessagesCount();
+    if (numberOfMessages != null) {
+      final nextMessages = await conversation.getLastMessages(numberOfMessages);
+      if (nextMessages.isNotEmpty) {
+        _messages.clear();
+        _messages.addAll(nextMessages.reversed);
+      }
     }
+    await conversation.setAllMessagesRead();
     reload();
   }
 
