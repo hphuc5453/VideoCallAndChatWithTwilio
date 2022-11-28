@@ -33,7 +33,6 @@ class ConversationListError extends ConversationListState {
 
 class ConversationListCubit extends Cubit<ConversationListState> {
   final TwilioFunctionsService backendService;
-  late ConversationClient client;
   final plugin = TwilioConversations();
   final subscriptions = <StreamSubscription>[];
 
@@ -59,41 +58,44 @@ class ConversationListCubit extends Cubit<ConversationListState> {
     } finally {}
   }
 
-  Future<void> create({required String jwtToken}) async {
+  create({required String jwtToken}) async {
     await TwilioConversations.debug(dart: true, native: true, sdk: false);
 
     print('debug logging set, creating client...');
-    client = (await plugin.create(jwtToken: jwtToken))!;
+    await plugin.create(jwtToken: jwtToken).then((client) {
+      print('Client initialized');
+      print('Your Identity: ${client?.myIdentity}');
 
-    print('Client initialized');
-    print('Your Identity: ${client.myIdentity}');
+      subscriptions.add(client!.onConversationAdded.listen((event) {
+        getMyConversations();
+      }));
 
-    subscriptions.add(client.onConversationAdded.listen((event) {
+      subscriptions.add(client.onConversationUpdated.listen((event) {
+        getMyConversations();
+      }));
+
+      subscriptions.add(client.onConversationDeleted.listen((event) {
+        getMyConversations();
+      }));
+
       getMyConversations();
-    }));
-
-    subscriptions.add(client.onConversationUpdated.listen((event) {
-      getMyConversations();
-    }));
-
-    subscriptions.add(client.onConversationDeleted.listen((event) {
-      getMyConversations();
-    }));
-
-    getMyConversations();
+    });
   }
 
   createConversation({String friendlyName = 'Test Conversation'}) async {
-    var result = await client.createConversation(friendlyName: friendlyName);
+    var result = await TwilioConversations.conversationClient?.createConversation(friendlyName: friendlyName);
     print('Conversation successfully created: ${result?.friendlyName}');
     await getMyConversations();
   }
 
-  Future<void> getMyConversations() async {
-    await client.getMyConversations().then((v) {
-      //TODO: With iOS, the library cannot get the frienly name of conversation
-      emit(ConversationListInitial());
-      emit(ConversationListLoaded(conversations: v));
+  getMyConversations() async {
+    print('[AppDebug] getMyConversations');
+    await TwilioConversations.conversationClient?.getMyConversations().then((conversations) {
+      //TODO: With iOS, the library cannot get the friendly name of conversation fastly
+      Timer(const Duration(seconds: 3), () {
+        emit(ConversationListInitial());
+        emit(ConversationListLoaded(conversations: conversations));
+      });
     });
   }
 }
