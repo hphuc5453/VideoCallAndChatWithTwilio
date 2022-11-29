@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:twilio_conversations/twilio_conversations.dart';
+import 'package:twilio_programmable_chat/twilio_programmable_chat.dart';
 
 class MessageWidget extends StatefulWidget {
   const MessageWidget({Key? key, required this.message, required this.isMyMessage}) : super(key: key);
@@ -32,7 +32,7 @@ class _MessageWidgetState extends State<MessageWidget> {
                     : CrossAxisAlignment.start,
                 children: [
               Text(
-                widget.message.body ?? '',
+                widget.message.messageBody ?? '',
                     style: TextStyle(
                       color: textColor,
                       fontSize: 13,

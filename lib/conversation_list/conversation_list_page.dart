@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:twilio_conversations/twilio_conversations.dart';
+import 'package:twilio_programmable_chat/twilio_programmable_chat.dart';
 import 'package:twilo_programable_video/conversation_list/conversation_widget.dart';
 import 'package:twilo_programable_video/progress/progress_widget.dart';
 import 'package:twilo_programable_video/shared/twilio_service.dart';
@@ -13,7 +13,7 @@ class ConversationListPage extends StatefulWidget {
   State<ConversationListPage> createState() => _ConversationListPageState();
 }
 
-Widget _buildBody(BuildContext context, List<Conversation> conversations) {
+Widget _buildBody(BuildContext context, List<ChannelDescriptor> conversations) {
   if (conversations.isNotEmpty) {
     return ListView.builder(
         shrinkWrap: true,

@@ -44,7 +44,7 @@ dependencies:
   uuid: ^3.0.7
   dartz: ^0.10.1
   flutter_bloc: ^8.1.1
-  twilio_conversations: ^0.1.0+1
+  twilio_programmable_chat: ^0.2.0
 
 dev_dependencies:
   flutter_test:

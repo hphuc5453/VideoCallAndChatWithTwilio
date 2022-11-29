@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:twilio_conversations/twilio_conversations.dart';
+import 'package:twilio_programmable_chat/twilio_programmable_chat.dart';
+import 'package:twilo_programable_video/app_constants.dart';
 
 abstract class ChatState extends Equatable {
   const ChatState();
@@ -23,12 +23,12 @@ class ChatLoaded extends ChatState {}
 class ChatLoading extends ChatState {}
 class ChatParticipantsLoading extends ChatState {}
 class ChatParticipantsLoaded extends ChatState {
-  final List<Participant> participants;
+  final List<Member> participants;
   const ChatParticipantsLoaded({required this.participants});
 }
 
 class ChatCubit extends Cubit<ChatState> {
-  final Conversation conversation;
+  final Channel conversation;
   late final List<Message> _messages = [];
   List<Message> get messageList => _messages;
   final subscriptions = <StreamSubscription>[];
@@ -38,34 +38,30 @@ class ChatCubit extends Cubit<ChatState> {
   getParticipants() async {
     emit(ChatParticipantsLoading());
     print('[ChatDebug] getParticipants');
-    await conversation.getParticipantsList().then((value) => {
-    emit(ChatParticipantsLoaded(participants: value))
-    });
+    final membersOfCurrentChannel = await conversation.members.getMembersList();
+    if (membersOfCurrentChannel != null) {
+      emit(ChatParticipantsLoaded(participants: membersOfCurrentChannel));
+    }
   }
 
-  addUserByIdentity(String identity) async {
-    print('[ChatDebug] addUserByIdentity');
-    await conversation.addParticipantByIdentity(identity);
-    await conversation.getParticipantsList();
+  addParticipant(String identity) async {
+    print('[ChatDebug] addMember');
+    await conversation.members.inviteByIdentity(identity);
+    await getParticipants();
   }
 
-  removeParticipant(Participant participant) async {
-    await participant.remove();
+  removeParticipant(Member member) async {
+    print('[ChatDebug] removeParticipant');
+    await conversation.members.remove(member);
     await getParticipants();
   }
 
   sendMessage(String message) async {
     try {
-      // set arbitrary attributes
-      final attributesData = <String, dynamic>{
-        'importance': 'high'
-      };
-      final attributes =
-      Attributes(AttributesType.OBJECT, jsonEncode(attributesData));
       final messageOptions = MessageOptions()
         ..withBody(message)
-        ..withAttributes(attributes);
-      await conversation.sendMessage(messageOptions);
+        ..withAttributes({'name': AppConstants.getIdentity});
+      await conversation.messages.sendMessage(messageOptions);
       await loadMessages();
     } catch (e) {
       print('[ChatCubit.sendMessage] Failed to send message Error: $e');
@@ -82,14 +78,11 @@ class ChatCubit extends Cubit<ChatState> {
 
   loadMessages() async {
     final numberOfMessages = await conversation.getMessagesCount();
-    if (numberOfMessages != null) {
-      final nextMessages = await conversation.getLastMessages(numberOfMessages);
-      if (nextMessages.isNotEmpty) {
-        _messages.clear();
-        _messages.addAll(nextMessages.reversed);
-      }
+    final nextMessages = await conversation.messages.getLastMessages(numberOfMessages);
+    if (nextMessages.isNotEmpty) {
+      _messages.clear();
+      _messages.addAll(nextMessages.reversed);
     }
-    await conversation.setAllMessagesRead();
     reload();
   }
 

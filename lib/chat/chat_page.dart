@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:twilio_conversations/twilio_conversations.dart';
+import 'package:twilio_programmable_chat/twilio_programmable_chat.dart';
+import 'package:twilo_programable_video/app_constants.dart';
 import 'package:twilo_programable_video/chat/message_widget.dart';
 import '../progress/progress_widget.dart';
 import 'chat_cubit.dart';
 
 class ChatPage extends StatefulWidget {
   ChatPage({Key? key, required this.conversation}) : super(key: key);
-  final Conversation conversation;
+  final ChannelDescriptor conversation;
   final messageInputController = TextEditingController();
 
   @override
@@ -30,7 +31,7 @@ Widget _buildBody(BuildContext context, TextEditingController controller) {
                 itemBuilder: (_, index) {
                   return MessageWidget(
                       message: chatCubit.messageList[index],
-                      isMyMessage: chatCubit.messageList[index].author == TwilioConversations.conversationClient?.myIdentity);
+                      isMyMessage: chatCubit.messageList[index].author == AppConstants.getIdentity);
                 }),
           ),
         ),
@@ -83,7 +84,7 @@ Widget _buildMessageInputBar(BuildContext context, TextEditingController control
 
 enum MessagesPageMenuOptions { participants }
 
-_showManageParticipantsDialog(BuildContext context, Conversation conversation) async {
+_showManageParticipantsDialog(BuildContext context, Channel conversation) async {
   TextEditingController controller = TextEditingController();
   return showDialog(
       context: context,
@@ -120,7 +121,9 @@ _showManageParticipantsDialog(BuildContext context, Conversation conversation) a
                                   },
                                   child: Row(
                                     children: [
-                                      Text(participant.identity ?? 'UNKNOWN'),
+                                      Text(participant.identity ?? 'UNKNOWN', style: const TextStyle(
+                                        color: Colors.green
+                                      ),),
                                     ],
                                   ),
                                 );
@@ -137,7 +140,7 @@ _showManageParticipantsDialog(BuildContext context, Conversation conversation) a
                               ),
                               IconButton(
                                 onPressed: () async {
-                                  await cubit.addUserByIdentity(controller.text);
+                                  await cubit.addParticipant(controller.text);
                                   Navigator.of(context).pop();
                                 },
                                 icon: const Icon(Icons.add),
@@ -172,10 +175,11 @@ class _ChatPageState extends State<ChatPage> {
           title: Text(widget.conversation.friendlyName ?? 'UNKNOWN'),
           actions: [
             PopupMenuButton(
-              onSelected: (result) {
+              onSelected: (result) async {
                 switch (result) {
                   case MessagesPageMenuOptions.participants:
-                    _showManageParticipantsDialog(context, widget.conversation);
+                    final channel = await widget.conversation.getChannel();
+                    _showManageParticipantsDialog(context, channel!);
                     break;
                 }
               },

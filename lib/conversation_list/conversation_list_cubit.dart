@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:twilio_conversations/twilio_conversations.dart';
+import 'package:twilio_programmable_chat/twilio_programmable_chat.dart';
 import 'package:twilo_programable_video/app_constants.dart';
 import '../shared/twilio_service.dart';
 
@@ -15,7 +15,7 @@ abstract class ConversationListState extends Equatable {
 class ConversationListInitial extends ConversationListState {}
 
 class ConversationListLoaded extends ConversationListState {
-  final List<Conversation> conversations;
+  final List<ChannelDescriptor> conversations;
 
   const ConversationListLoaded({required this.conversations});
 }
@@ -33,13 +33,19 @@ class ConversationListError extends ConversationListState {
 
 class ConversationListCubit extends Cubit<ConversationListState> {
   final TwilioFunctionsService backendService;
-  final plugin = TwilioConversations();
   final subscriptions = <StreamSubscription>[];
+  late ChatClient? chatClient;
 
   ConversationListCubit({required this.backendService}) : super(ConversationListInitial());
 
-  join(Conversation conversation) async {
-    await conversation.join();
+  join(ChannelDescriptor channelDescriptor) async {
+    final channel = await channelDescriptor.getChannel();
+    if (channel == null) {
+      return;
+    }
+    if (channel.status != ChannelStatus.JOINED) {
+      await channel.join();
+    }
   }
 
   submit() async {
@@ -59,43 +65,41 @@ class ConversationListCubit extends Cubit<ConversationListState> {
   }
 
   create({required String jwtToken}) async {
-    await TwilioConversations.debug(dart: true, native: true, sdk: false);
+    await TwilioProgrammableChat.debug(dart: true, native: true, sdk: false);
 
     print('debug logging set, creating client...');
-    await plugin.create(jwtToken: jwtToken).then((client) {
+    chatClient = (await TwilioProgrammableChat.create(jwtToken, Properties()));
+    if (chatClient != null) {
       print('Client initialized');
-      print('Your Identity: ${client?.myIdentity}');
+      print('Your Identity: ${chatClient?.myIdentity}');
 
-      subscriptions.add(client!.onConversationAdded.listen((event) {
+      subscriptions.add(chatClient!.onChannelAdded.listen((event) {
         getMyConversations();
       }));
 
-      subscriptions.add(client.onConversationUpdated.listen((event) {
+      subscriptions.add(chatClient!.onChannelUpdated.listen((event) {
         getMyConversations();
       }));
 
-      subscriptions.add(client.onConversationDeleted.listen((event) {
+      subscriptions.add(chatClient!.onChannelDeleted.listen((event) {
         getMyConversations();
       }));
 
       getMyConversations();
-    });
+    }
   }
 
   createConversation({String friendlyName = 'Test Conversation'}) async {
-    var result = await TwilioConversations.conversationClient?.createConversation(friendlyName: friendlyName);
-    print('Conversation successfully created: ${result?.friendlyName}');
+    await chatClient?.channels.createChannel(friendlyName, ChannelType.PRIVATE);
+    print('Conversation created successfully');
     await getMyConversations();
   }
 
   getMyConversations() async {
     print('[AppDebug] getMyConversations');
-    await TwilioConversations.conversationClient?.getMyConversations().then((conversations) {
-      //TODO: With iOS, the library cannot get the friendly name of conversation fastly
-      Timer(const Duration(seconds: 3), () {
-        emit(ConversationListInitial());
-        emit(ConversationListLoaded(conversations: conversations));
-      });
+    await chatClient?.channels.getUserChannelsList().then((conversations) {
+      emit(ConversationListInitial());
+      emit(ConversationListLoaded(conversations: conversations.items));
     });
   }
 }
